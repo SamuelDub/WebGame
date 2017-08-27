@@ -1,5 +1,28 @@
+var socket = io();
+
 var canvas = document.getElementById("ctx")
 var ctx = canvas.getContext("2d");
+
+socket.on("userJoined", function (data) {
+    console.log(data)
+});
+
+socket.on("allCircles", function (data) {
+    getAllCircles(data)
+})
+
+socket.on("addCircle", function (data) {
+    console.log(data);
+    addCircle(data);
+})
+
+socket.on("updateCircles", function(data) {
+    updateCircles(data);
+})
+
+socket.on("newCirclePos", function(data) {
+    updateCircles(data);
+})
 
 var player = {
     startX: canvas.width / 2,
@@ -8,16 +31,22 @@ var player = {
     name: "something"
 }
 
-var speed;speed
+var speed = 3;
 var allCircles = []
 
 var startCircleName = prompt("What is the name of your circle?");
+
+randX = Math.floor(Math.random() * 1280) + 1;
+randY = Math.floor(Math.random() * 720) + 1;
+
 var startCircle = {
-    x: player.startX,
-    y: player.startY,
+    x: randX,
+    y: randY,
     radius: player.radius,
     name: startCircleName
 }
+
+socket.emit("userCreatedCircle", startCircle);
 
 allCircles.push(startCircle)
 
@@ -28,6 +57,7 @@ function drawCircles() {
     allCircles.forEach(function (circle) {
         ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
+        //console.log(allCircles)
         ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2, true);
         ctx.fillStyle = "#07C";
         ctx.fill();
@@ -40,37 +70,30 @@ var LEFT = false;
 var RIGHT = false;
 
 function changePosition(x, y) {
-   for (var i in allCircles) {
-     if (allCircles[i].name == startCircleName) {
-        allCircles[i].x = x;
-        allCircles[i].y = y;
-        console.log("changed")
-        break;
-     }
-   }
+    for (var i in allCircles) {
+        if (allCircles[i].name == startCircleName) {
+            allCircles[i].x = x;
+            allCircles[i].y = y;
+            sendUpdatedCircle();
+            break;
+        }
+    }
 }
 
 function move() {
-    console.log(startCircle)
-    console.log(startCircle.x)
-    console.log(startCircle.y)
     if (LEFT && startCircle.x > 10) {
-        console.log("moved")
         startCircle.x -= speed;
         changePosition(startCircle.x, startCircle.y)
     } else
     if (RIGHT && startCircle.x < 1268) {
-        console.log("moved")
         startCircle.x += speed;
         changePosition(startCircle.x, startCircle.y)
     } else
     if (UP && startCircle.y > 12) {
-        console.log("moved")
         startCircle.y -= speed;
         changePosition(startCircle.x, startCircle.y)
     } else
     if (DOWN && startCircle.y < 710) {
-        console.log("moved")
         startCircle.y += speed;
         changePosition(startCircle.x, startCircle.y)
     }
@@ -82,10 +105,6 @@ document.onkeydown = function (e) {
     if (e.keyCode == 39) RIGHT = true;
     if (e.keyCode == 38) UP = true;
     if (e.keyCode == 40) DOWN = true;
-    // if (e.keyCode == 13) {
-    //     makeCircle()
-    //     console.log("drew circle")
-    // }
 }
 
 document.onkeyup = function (e) {
@@ -93,6 +112,34 @@ document.onkeyup = function (e) {
     if (e.keyCode == 39) RIGHT = false;
     if (e.keyCode == 38) UP = false;
     if (e.keyCode == 40) DOWN = false;
+}
+
+function getAllCircles(circles) {
+    circles.forEach(function (circle) {
+        if (circle.name !== startCircleName) {
+            allCircles.push(circle)
+        }
+    })
+}
+
+function addCircle(circle) {
+    allCircles.push(circle)
+}
+
+function updateCircles(circles) {
+    allCircles = circles;
+}
+
+function sendUpdatedCircle() {
+    var circleToSend;
+
+    allCircles.forEach(function (circle) {
+        if (circle.name == startCircleName) {
+            circleToSend = circle;
+        }
+    })
+
+    socket.emit("updateCircle", circleToSend)
 }
 
 function clearCanvas() {
@@ -105,4 +152,5 @@ function update() {
     clearCanvas();
     drawCircles();
     move();
+    //   sendCircles();
 }

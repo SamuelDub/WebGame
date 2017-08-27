@@ -17,7 +17,10 @@
   },
   "homepage": "https://github.com/SamuelDub/WebGame#readme",
   "dependencies": {
+    "bufferutil": "^3.0.2",
     "express": "^4.15.4",
-    "socket.io": "^2.0.3"
+    "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.3",
+    "utf-8-validate": "^3.0.3"
   }
 }
